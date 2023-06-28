@@ -1,7 +1,7 @@
+import gradio as gr
 import os
 from dataclasses import dataclass, asdict
 from ctransformers import AutoModelForCausalLM, AutoConfig
-import streamlit as st
 
 
 @dataclass
@@ -40,41 +40,53 @@ def generate(
     )
 
 
-def generate_response(user_input):
-    generator = generate(llm, generation_config, user_input.strip())
+config = AutoConfig.from_pretrained(
+    "teknium/Replit-v2-CodeInstruct-3B", context_length=2048
+)
+llm = AutoModelForCausalLM.from_pretrained(
+    os.path.abspath("models/replit-v2-codeinstruct-3b.q4_1.bin"),
+    model_type="replit",
+    config=config,
+)
+
+generation_config = GenerationConfig(
+    temperature=0.2,
+    top_k=50,
+    top_p=0.9,
+    repetition_penalty=1.0,
+    max_new_tokens=512,  # adjust as needed
+    seed=42,
+    reset=True,  # reset history (cache)
+    stream=True,  # streaming per word/token
+    threads=int(os.cpu_count() / 6),  # adjust for your CPU
+    stop=["<|endoftext|>"],
+)
+
+def generate_text(prompt):
+    generator = generate(llm, generation_config, prompt.strip())
     response = ""
     for word in generator:
         response += word
     return response
 
+inputs = gr.inputs.Textbox(lines=7, label="Enter your prompt here")
+outputs = gr.outputs.Textbox(label="Model response")
 
-if __name__ == "__main__":
-    config = AutoConfig.from_pretrained(
-        "teknium/Replit-v2-CodeInstruct-3B", context_length=2048
-    )
-    llm = AutoModelForCausalLM.from_pretrained(
-        os.path.abspath("models/replit-v2-codeinstruct-3b.q4_1.bin"),
-        model_type="replit",
-        config=config,
-    )
+title = "Replit Code Instruct inference using CPU"
+description = "This AI can help you with your coding questions. Enter your prompt and get a response from the AI."
+examples = [
+    ["How do I read a file in Python?"],
+    ["What is the difference between a stack and a queue?"],
+    ["How do I sort a list of numbers in Python?"],
+    ["What is the time complexity of quicksort?"],
+    ["How do I implement a binary search in Python?"],
+]
 
-    generation_config = GenerationConfig(
-        temperature=0.2,
-        top_k=50,
-        top_p=0.9,
-        repetition_penalty=1.0,
-        max_new_tokens=512,  # adjust as needed
-        seed=42,
-        reset=True,  # reset history (cache)
-        stream=True,  # streaming per word/token
-        threads=int(os.cpu_count() / 6),  # adjust for your CPU
-        stop=["<|endoftext|>"],
-    )
-
-    user_prefix = "[user]: "
-    assistant_prefix = "[assistant]: "
-
-    st.title("Chat with Assistant")
-    user_input = st.text_input(user_prefix)
-    response = generate_response(user_input)
-    st.text_area(assistant_prefix, value=response, height=200)
+gr.Interface(
+    generate_text,
+    inputs,
+    outputs,
+    title=title,
+    description=description,
+    examples=examples,
+).launch()

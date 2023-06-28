@@ -1,6 +1,7 @@
 import os
 from dataclasses import dataclass, asdict
 from ctransformers import AutoModelForCausalLM, AutoConfig
+import streamlit as st
 
 
 @dataclass
@@ -39,6 +40,14 @@ def generate(
     )
 
 
+def generate_response(user_input):
+    generator = generate(llm, generation_config, user_input.strip())
+    response = ""
+    for word in generator:
+        response += word
+    return response
+
+
 if __name__ == "__main__":
     config = AutoConfig.from_pretrained(
         "teknium/Replit-v2-CodeInstruct-3B", context_length=2048
@@ -63,12 +72,9 @@ if __name__ == "__main__":
     )
 
     user_prefix = "[user]: "
-    assistant_prefix = f"[assistant]:"
+    assistant_prefix = "[assistant]: "
 
-    while True:
-        user_prompt = input(user_prefix)
-        generator = generate(llm, generation_config, user_prompt.strip())
-        print(assistant_prefix, end=" ", flush=True)
-        for word in generator:
-            print(word, end="", flush=True)
-        print("")
+    st.title("Chat with Assistant")
+    user_input = st.text_input(user_prefix)
+    response = generate_response(user_input)
+    st.text_area(assistant_prefix, value=response, height=200)

@@ -5,7 +5,6 @@ import torch
 from dataclasses import dataclass, asdict
 from ctransformers import AutoModelForCausalLM, AutoConfig
 
-
 @dataclass
 class GenerationConfig:
     temperature: float
@@ -18,7 +17,6 @@ class GenerationConfig:
     stream: bool
     threads: int
     stop: list[str]
-
 
 def format_prompt(user_prompt: str):
     return f"""### Instruction:
@@ -40,7 +38,6 @@ def generate(
         ),
         **asdict(generation_config),
     )
-
 
 if __name__ == "__main__":
     config = AutoConfig.from_pretrained(
@@ -73,8 +70,8 @@ def generate_text(prompt):
         response += word
     return response
 
-inputs = gr.inputs.Textbox(lines=7, label="Enter your prompt here")
-outputs = gr.outputs.Textbox(label="Model response")
+def user_interface(input_text):
+    return input_text, gr.outputs.Textbox(label="Model response")
 
 title = "Replit Code Instruct inference using CPU"
 description = "This AI can help you with your coding questions. Enter your prompt and get a response from the AI."
@@ -88,8 +85,7 @@ examples = [
 
 gr.Interface(
     generate_text,
-    inputs,
-    outputs,
+    user_interface,
     title=title,
     description=description,
     examples=examples,

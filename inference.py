@@ -89,4 +89,5 @@ gr.Interface(
     title=title,
     description=description,
     examples=examples,
+    **user_interface()[1]  # Pass the second element (output) from user_interface
 ).launch()

@@ -1,5 +1,6 @@
 import gradio as gr
 import os
+import spaces
 from dataclasses import dataclass, asdict
 from ctransformers import AutoModelForCausalLM, AutoConfig
 
@@ -24,7 +25,7 @@ def format_prompt(user_prompt: str):
 
 ### Response:"""
 
-
+@spaces.GPU
 def generate(
     llm: AutoModelForCausalLM,
     generation_config: GenerationConfig,

@@ -1,9 +1,9 @@
 import gradio as gr
 import os
 import spaces
+import torch
 from dataclasses import dataclass, asdict
 from ctransformers import AutoModelForCausalLM, AutoConfig
-
 
 @dataclass
 class GenerationConfig:
@@ -17,7 +17,6 @@ class GenerationConfig:
     stream: bool
     threads: int
     stop: list[str]
-
 
 def format_prompt(user_prompt: str):
     return f"""### Instruction:
@@ -40,15 +39,18 @@ def generate(
         **asdict(generation_config),
     )
 
-
 config = AutoConfig.from_pretrained(
     "teknium/Replit-v2-CodeInstruct-3B", context_length=2048
 )
+
+# Check if GPU is available, if not use CPU
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 llm = AutoModelForCausalLM.from_pretrained(
     os.path.abspath("models/replit-v2-codeinstruct-3b.q4_1.bin"),
     model_type="replit",
     config=config,
-)
+).to(device)
 
 generation_config = GenerationConfig(
     temperature=0.2,
@@ -73,7 +75,7 @@ def generate_text(prompt):
 inputs = gr.inputs.Textbox(lines=7, label="Enter your prompt here")
 outputs = gr.outputs.Textbox(label="Model response")
 
-title = "Replit Code Instruct inference using CPU"
+title = "Replit Code Instruct inference using GPU (if available)"
 description = "This AI can help you with your coding questions. Enter your prompt and get a response from the AI."
 examples = [
     ["How do I read a file in Python?"],

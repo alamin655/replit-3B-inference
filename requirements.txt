@@ -1,3 +1,2 @@
 ctransformers==0.2.11
 transformers==4.30.2
-torch

@@ -1,9 +1,8 @@
 import gradio as gr
 import os
-import spaces
-import torch
 from dataclasses import dataclass, asdict
 from ctransformers import AutoModelForCausalLM, AutoConfig
+
 
 @dataclass
 class GenerationConfig:
@@ -18,13 +17,13 @@ class GenerationConfig:
     threads: int
     stop: list[str]
 
+
 def format_prompt(user_prompt: str):
     return f"""### Instruction:
 {user_prompt}
 
 ### Response:"""
 
-@spaces.GPU
 def generate(
     llm: AutoModelForCausalLM,
     generation_config: GenerationConfig,
@@ -38,6 +37,7 @@ def generate(
         ),
         **asdict(generation_config),
     )
+
 
 if __name__ == "__main__":
     config = AutoConfig.from_pretrained(
@@ -70,8 +70,8 @@ def generate_text(prompt):
         response += word
     return response
 
-def user_interface(input_text):
-    return input_text, gr.outputs.Textbox(label="Model response")
+inputs = gr.inputs.Textbox(lines=7, label="Enter your prompt here")
+outputs = gr.outputs.Textbox(label="Model response")
 
 title = "Replit Code Instruct inference using CPU"
 description = "This AI can help you with your coding questions. Enter your prompt and get a response from the AI."
@@ -85,9 +85,9 @@ examples = [
 
 gr.Interface(
     generate_text,
-    user_interface,
+    inputs,
+    outputs,
     title=title,
     description=description,
     examples=examples,
-    **user_interface()[1]  # Pass the second element (output) from user_interface
 ).launch()
